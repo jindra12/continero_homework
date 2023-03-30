@@ -5,7 +5,7 @@ using System.Xml.Linq;
 using Newtonsoft.Json;
 namespace Continero.Homework
 {
-    public class Document
+    /*public class Document // Class in the main space
     {
         public string Title { get; set; }
         public string Text { get; set; }
@@ -27,7 +27,7 @@ namespace Continero.Homework
                 // Does not check if file is missing
                 FileStream sourceStream = File.Open(sourceFileName, FileMode.Open);
                 var reader = new StreamReader(sourceStream); // no using() syntax, might leave the file open
-                string input = reader.ReadToEnd();
+                string input = reader.ReadToEnd(); // Won't even compile, string is declared in the wrong scope
             }
             catch (Exception ex)
             {
@@ -43,6 +43,14 @@ namespace Continero.Homework
             var targetStream = File.Open(targetFileName, FileMode.Create, FileAccess.Write);
             var sw = new StreamWriter(targetStream);
             sw.Write(serializedDoc);
+        }
+    }*/
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            
         }
     }
 }
