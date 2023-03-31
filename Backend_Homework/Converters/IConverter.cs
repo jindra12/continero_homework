@@ -10,7 +10,7 @@ namespace Backend_Homework.Converters
         /// <summary>
         /// Loads content from bytes
         /// </summary>
-        public Task<IContent> FromBytes(Stream file);
+        public Task<IContent> FromStream(Stream file);
 
         /// <summary>
         /// Outputs stream from content

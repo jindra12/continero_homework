@@ -1,13 +1,14 @@
-using System.Text;
+using Backend_Homework.Attributes;
 using Backend_Homework.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
 namespace Backend_Homework.Converters
 {
+    [CommandLine("json")]
     public class JsonConverter : IConverter
     {
-        public async Task<IContent> FromBytes(Stream file)
+        public async Task<IContent> FromStream(Stream file)
         {
             using (var streamReader = new StreamReader(file))
             using (var jsonTextReader = new JsonTextReader(streamReader))

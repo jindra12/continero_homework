@@ -1,8 +1,10 @@
 using System.Xml;
+using Backend_Homework.Attributes;
 using Backend_Homework.Models;
 
 namespace Backend_Homework.Converters
 {
+    [CommandLine("xml")]
     public class XmlConverter : IConverter
     {
         /// <summary>
@@ -22,7 +24,7 @@ namespace Backend_Homework.Converters
             public const string Attributes = "#attributes";
         }
 
-        private readonly List<string> skippableNames = new List<string>
+        private static readonly HashSet<string> skippableNames = new HashSet<string>
         {
             ReservedNames.CDATA,
             ReservedNames.Comment,
@@ -32,7 +34,7 @@ namespace Backend_Homework.Converters
             ReservedNames.XmlDeclaration,
         };
 
-        public Task<IContent> FromBytes(Stream file)
+        public Task<IContent> FromStream(Stream file)
         {
             return Task.Run<IContent>(() =>
             {

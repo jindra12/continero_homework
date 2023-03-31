@@ -14,5 +14,10 @@ namespace Backend_Homework.FileManagers
         /// Saves a file based on configuration
         /// </summary>
         public Task Save(T config, Stream file);
+
+        /// <summary>
+        /// Process command line input, output configuration
+        /// </summary>
+        public T ParseConfigFromCommandLine(string input);
     }
 }

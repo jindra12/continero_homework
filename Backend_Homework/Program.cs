@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Xml.Linq;
-using Newtonsoft.Json;
+﻿using Backend_Homework.Processor;
+using Backend_Homework.UI;
+
 namespace Continero.Homework
 {
     /*public class Document // Class in the main space
@@ -50,7 +48,12 @@ namespace Continero.Homework
     {
         static void Main(string[] args)
         {
-            
+            var processor = new CommandLineProcessor();
+            foreach (var arg in args)
+                processor.ProcessArgument(arg);
+            var task = processor.Run();
+            task.ConfigureAwait(false);
+            new Loading(task);
         }
     }
 }
