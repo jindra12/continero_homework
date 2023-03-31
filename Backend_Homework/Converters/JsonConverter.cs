@@ -19,7 +19,7 @@ namespace Backend_Homework.Converters
 
         public Task<Stream> FromContent(IContent content)
         {
-            return new Task<Stream>(() =>
+            return Task.Run<Stream>(() =>
             {
                 var memoryStream = new MemoryStream();
                 using (var streamWriter = new StreamWriter(memoryStream))
