@@ -20,3 +20,18 @@ We’re going to appraise the **design of given code** that should match the qua
 
 ## Delivery ##
 Please version progress as usual, upload your homework to GitHub or other preferred git storage and send us link. Alternatively, use git archive and send us a ZIP archive.
+
+
+# Response #
+
+## Code issues
+
+Code issues are documented by regular comments in Program.cs of Backend_Homework
+
+## Implementation
+
+Determines kind of storage/conversion by console arguments, can work with any format implemented using a class implementing an interface, same for storage
+
+## Testing
+
+Has both snapshot and regular unit test theories using xUnit in Backend_Homework_Test solution
