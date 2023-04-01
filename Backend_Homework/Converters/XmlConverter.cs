@@ -20,7 +20,7 @@ namespace Backend_Homework.Converters
             public const string Text = "#text";
             public const string Whitespace = "#whitespace";
             public const string SignificantWhitespace = "#significant-whitespace";
-            public const string XmlDeclaration = "#xml-declaration";
+            public const string XmlDeclaration = "xml";
             public const string Attributes = "#attributes";
         }
 
@@ -31,7 +31,6 @@ namespace Backend_Homework.Converters
             ReservedNames.Document,
             ReservedNames.DocumentFragment,
             ReservedNames.Attributes,
-            ReservedNames.XmlDeclaration,
         };
 
         public Task<IContent> FromStream(Stream file)
@@ -46,16 +45,16 @@ namespace Backend_Homework.Converters
 
         public Task<Stream> FromContent(IContent content)
         {
-            return Task.Run<Stream>(() =>
+            var task = Task.Run<Stream>(() =>
             {
                 var memoryStream = new MemoryStream();
-                using (var streamWriter = new StreamWriter(memoryStream))
-                {
-                    SerializeIntoStream(content, streamWriter, true);
-                    streamWriter.Flush();
-                }
+                var streamWriter = new StreamWriter(memoryStream);
+                SerializeIntoStream(content, streamWriter, true);
+                streamWriter.Flush();
                 return memoryStream;
             });
+            task.ConfigureAwait(false);
+            return task;
         }
 
         private void SerializeIntoStream(IContent content, StreamWriter streamWriter, bool isRoot = false)
@@ -65,13 +64,10 @@ namespace Backend_Homework.Converters
                 if (content is not ObjectContent rootContent)
                     throw new InvalidOperationException("Cannot serialize non-object content into xml");
                 var parentKey = rootContent.Children.Single().Key;
-                if (parentKey != ReservedNames.XmlDeclaration)
-                    throw new InvalidOperationException($"tag {parentKey} cannot be root in xml, xml declaration is missing");
+                if (parentKey != ReservedNames.Document)
+                    throw new InvalidOperationException($"tag {parentKey} cannot be root in xml, #document is missing");
                 else
                 {
-                    streamWriter.Write("<?xml");
-                    SerializeAttributeIntoStream(rootContent, streamWriter);
-                    streamWriter.Write("?>");
                     SerializeIntoStream(rootContent.Children.First().Value, streamWriter);
                     return;
                 }
@@ -85,11 +81,20 @@ namespace Backend_Homework.Converters
                     var value = pair.Value;
                     if (value is ObjectContent objectValue)
                     {
-                        streamWriter.Write($"<{pair.Key}");
-                        SerializeAttributeIntoStream(objectValue, streamWriter);
-                        streamWriter.Write(">");
-                        SerializeIntoStream(value, streamWriter);       
-                        streamWriter.Write($"</{pair.Key}>");
+                        if (pair.Key == ReservedNames.XmlDeclaration)
+                        {
+                            streamWriter.Write("<?xml");
+                            SerializeAttributeIntoStream(objectValue, streamWriter);
+                            streamWriter.Write("?>");
+                        }
+                        else
+                        {
+                            streamWriter.Write($"<{pair.Key}");
+                            SerializeAttributeIntoStream(objectValue, streamWriter);
+                            streamWriter.Write(">");
+                            SerializeIntoStream(value, streamWriter);
+                            streamWriter.Write($"</{pair.Key}>");
+                        }
                     }
                     else if (value is ArrayContent arrayValue)
                     {
@@ -102,7 +107,7 @@ namespace Backend_Homework.Converters
                                 streamWriter.Write($"<{pair.Key}");
                                 SerializeAttributeIntoStream(objectElement, streamWriter);
                                 streamWriter.Write(">");
-                                SerializeIntoStream(value, streamWriter);       
+                                SerializeIntoStream(value, streamWriter);
                                 streamWriter.Write($"</{pair.Key}>");
                             }
                         }
@@ -146,34 +151,16 @@ namespace Backend_Homework.Converters
 
         private IContent SerializeIntoContent(XmlNode xml, bool rootElement = false)
         {
-            if (xml.NodeType == XmlNodeType.Text) {
-                if (xml.InnerText == "true")
-                    return new PrimitiveContent
-                    {
-                        Value = true
-                    };
-                if (xml.InnerText == "false")
-                    return new PrimitiveContent
-                    {
-                        Value = false
-                    };
-                if (Int32.TryParse(xml.InnerText, out var number))
-                    return new PrimitiveContent
-                    {
-                        Value = number
-                    };
-                if (Double.TryParse(xml.InnerText, out var decimalNumber))
-                    return new PrimitiveContent
-                    {
-                        Value = decimalNumber  
-                    };
+            if (xml.NodeType == XmlNodeType.Text || xml.NodeType == XmlNodeType.Whitespace || xml.NodeType == XmlNodeType.SignificantWhitespace)
+            {
                 return new PrimitiveContent
                 {
                     Value = xml.InnerText
                 };
             }
+
             var (trueParent, toWriteIn) = BuildObjectContent(xml, rootElement);
-            
+
             var xmlList = xml.ChildNodes.Cast<XmlNode>().GroupBy((node) => node.Name);
             foreach (var group in xmlList)
             {
@@ -190,19 +177,47 @@ namespace Backend_Homework.Converters
                     toWriteIn.Children[child.Name] = SerializeIntoContent(child);
                 }
             }
-            if (xml.Attributes?.Count > 0)
+            var xmlAttributes = GetAttributes(xml);
+
+            if (xmlAttributes.Count > 0)
             {
                 var attributes = new ObjectContent();
-                foreach (XmlAttribute attribute in xml.Attributes)
+                foreach (var (Name, Value) in xmlAttributes)
                 {
-                    attributes.Children[attribute.Name] = new PrimitiveContent
+                    attributes.Children[Name] = new PrimitiveContent
                     {
-                        Value = attribute.Value
+                        Value = Value
                     };
                 }
                 toWriteIn.Children[ReservedNames.Attributes] = attributes;
             }
+
             return trueParent;
+        }
+
+        private IList<(string Name, string Value)> GetAttributes(XmlNode xml)
+        {
+            var accumulator = new List<(string Name, string Value)>();
+            if (xml.Name == ReservedNames.XmlDeclaration)
+            {
+                var attributes = (xml.Value ?? "").Split(" ");
+                foreach (var attribute in attributes)
+                {
+                    var attributeSplit = attribute.Split("=");
+                    var attributeName = attributeSplit[0];
+                    var cleanAttributeValue = attributeSplit[1].Replace("\"", "");
+                    accumulator.Add((attributeName, cleanAttributeValue));
+                }
+
+            }
+            else if (xml.Attributes?.Count > 0)
+            {
+                foreach (XmlAttribute attribute in xml.Attributes)
+                {
+                    accumulator.Add((attribute.Name, attribute.Value));
+                }
+            }
+            return accumulator;
         }
 
         private (ObjectContent toReturn, ObjectContent toWriteIn) BuildObjectContent(XmlNode xml, bool rootElement)

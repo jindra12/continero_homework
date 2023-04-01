@@ -13,23 +13,23 @@ namespace Backend_Homework.Converters
             using (var streamReader = new StreamReader(file))
             using (var jsonTextReader = new JsonTextReader(streamReader))
             {
-                var json = await JObject.LoadAsync(jsonTextReader);
+                var json = await JToken.LoadAsync(jsonTextReader);
                 return SerializeIntoContent(json);
             }
         }
 
         public Task<Stream> FromContent(IContent content)
         {
-            return Task.Run<Stream>(() =>
+            var task = Task.Run<Stream>(() =>
             {
                 var memoryStream = new MemoryStream();
-                using (var streamWriter = new StreamWriter(memoryStream))
-                {
-                    SerializeIntoStream(content, streamWriter);
-                    streamWriter.Flush();
-                }
+                var streamWriter = new StreamWriter(memoryStream);
+                SerializeIntoStream(content, streamWriter);
+                streamWriter.Flush();
                 return memoryStream;
             });
+            task.ConfigureAwait(false);
+            return task;
         }
 
         private IContent SerializeIntoContent(JToken? json)
@@ -78,8 +78,7 @@ namespace Backend_Homework.Converters
                 for (var i = 0; i < keyList.Count; i++)
                 {
                     var child = objectContent.Children[keyList[i]];
-                    writer.Write(keyList[i]);
-                    writer.Write(":");
+                    writer.Write($"\"{keyList[i]}\":");
                     SerializeIntoStream(child, writer);
                     if (i != keyList.Count - 1)
                         writer.Write(",");
