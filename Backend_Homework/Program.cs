@@ -46,14 +46,14 @@ namespace Continero.Homework
 
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
             var processor = new CommandLineProcessor();
             foreach (var arg in args)
                 processor.ProcessArgument(arg);
             var task = processor.Run();
-            task.ConfigureAwait(false);
-            new Loading(task);
+            await new Loading(task).Wait();
+            Console.WriteLine("Done!");
         }
     }
 }

@@ -7,10 +7,9 @@ namespace Backend_Homework.UI
         public Loading(Task awaited)
         {
             this.awaited = awaited ?? throw new ArgumentNullException(nameof(awaited));
-            this.Wait().ConfigureAwait(true);
         }
 
-        private async Task Wait()
+        public async Task Wait()
         {
             while(!this.awaited.IsCompleted)
             {

@@ -90,7 +90,7 @@ namespace Backend_Homework.Converters
                 else if (primitive.Value is not string stringValue)
                     writer.Write(primitive.Value.ToString());
                 else
-                    writer.Write($"\"{stringValue}\"");
+                    writer.Write($"\"{stringValue.Replace(Environment.NewLine, "\\n").Replace("\"", "\\\"")}\"");
             } else {
                 throw new InvalidOperationException("Unknown type of IContent found");
             }
