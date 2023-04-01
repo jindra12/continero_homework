@@ -35,3 +35,12 @@ Determines kind of storage/conversion by console arguments, can work with any fo
 ## Testing
 
 Has both snapshot and regular unit test theories using xUnit in Backend_Homework_Test solution
+
+## Running
+
+One can run the app with dotnet run/test and adding -- arguments, list of which is described here:
+
+- -in specifies the incoming format to convert from
+- -out specifies the outgoing format to conver to
+- -from {type} {config} specifies the type of filesystem (cloud/file/http) to get file from, config is the filepath/http/cloud link
+- -to {type} {config} specifies the type of filesystem (cloud/file/http) to save the file to, config is the filepath/http/cloud link
