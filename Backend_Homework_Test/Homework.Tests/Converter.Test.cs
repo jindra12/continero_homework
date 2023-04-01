@@ -5,19 +5,39 @@ namespace Homework.Tests;
 
 public class ConverterTests
 {
+    /// <summary>
+    /// Instance of JSON converter, converts JSON to IContent and back
+    /// </summary>
     private JsonConverter jsonConverter = new JsonConverter();
+
+    /// <summary>
+    /// Instance of XML converter, converts XML to IContent and back
+    /// </summary>
     private XmlConverter xmlConverter = new XmlConverter();
 
+    /// <summary>
+    /// Tests JSON serialization to IContent and back
+    /// </summary>
+    /// <param name="expected">JSON input</param>
     [Theory]
     [MemberData(nameof(TestJsonGenerator))]
     public async Task JsonSerializationTests(string expected) =>
         await BasicSerializationTest(jsonConverter, expected);
 
+    /// <summary>
+    /// Tests XML serialization to IContent and back
+    /// </summary>
+    /// <param name="expected">XML input</param>
     [Theory]
     [MemberData(nameof(TestXmlGenerator))]
     public async Task XmlSerializationTests(string expected) =>
         await BasicSerializationTest(xmlConverter, expected);
 
+    /// <summary>
+    /// Run serialization test
+    /// </summary>
+    /// <param name="converter">Serializer instance</param>
+    /// <param name="expected">input to convert to IContent</param>
     private async Task BasicSerializationTest(IConverter converter, string expected)
     {
         var content = await converter.FromStream(GetStreamFromString(expected));
@@ -25,11 +45,19 @@ public class ConverterTests
         Assert.Equal(expected, actual);
     }
 
+    /// <summary>
+    /// Converts stream to string
+    /// </summary>
+    /// <param name="text">string to be converted to stream</param>
     private Stream GetStreamFromString(string text)
     {
         return new MemoryStream(Encoding.UTF8.GetBytes(text)); 
     }
 
+    /// <summary>
+    /// Converts stream to string
+    /// </summary>
+    /// <param name="stream">stream to be converted into string</param>
     private string GetStringFromStream(Stream stream)
     {
         stream.Seek(0, SeekOrigin.Begin);
@@ -39,6 +67,9 @@ public class ConverterTests
         }
     }
 
+    /// <summary>
+    /// Returns test JSONs
+    /// </summary>
     public static IEnumerable<object[]> TestJsonGenerator =>
         new List<object[]>
         {
@@ -52,6 +83,9 @@ public class ConverterTests
             new object[] { "[{\"test\":1}]" },
         };
 
+    /// <summary>
+    /// Returns test XMLs
+    /// </summary>
     public static IEnumerable<object[]> TestXmlGenerator =>
         new List<object[]>
             {

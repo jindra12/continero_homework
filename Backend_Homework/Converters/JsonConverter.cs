@@ -5,9 +5,17 @@ using Newtonsoft.Json.Linq;
 
 namespace Backend_Homework.Converters
 {
+    /// <summary>
+    /// Converts JSON strings/streams to IContent and back
+    /// </summary>
     [CommandLine("json")]
     public class JsonConverter : IConverter
     {
+        /// <summary>
+        /// Generates IContent from JSON stream
+        /// </summary>
+        /// <param name="file">Stream containing JSON string representation</param>
+        /// <returns>IContent representation of JSON</returns>
         public async Task<IContent> FromStream(Stream file)
         {
             using (var streamReader = new StreamReader(file))
@@ -18,6 +26,11 @@ namespace Backend_Homework.Converters
             }
         }
 
+        /// <summary>
+        /// Generates Stream containing JSON string representation
+        /// </summary>
+        /// <param name="content">model from which JSON is generated</param>
+        /// <returns>Stream containing JSON string representation</returns>
         public Task<Stream> FromContent(IContent content)
         {
             var task = Task.Run<Stream>(() =>
@@ -32,6 +45,11 @@ namespace Backend_Homework.Converters
             return task;
         }
 
+        /// <summary>
+        /// Internal JSON serializer
+        /// </summary>
+        /// <param name="json">json representation</param>
+        /// <returns>content JSON representation</returns>
         private IContent SerializeIntoContent(JToken? json)
         {
             if (json is null || json.Type == JTokenType.None || json.Type == JTokenType.Null)
@@ -57,6 +75,11 @@ namespace Backend_Homework.Converters
             };
         }
 
+        /// <summary>
+        /// Serializes IContent into string JSON representation stream
+        /// </summary>
+        /// <param name="content">Content to be parsed</param>
+        /// <param name="writer">stream into which this method writes</param>
         private void SerializeIntoStream(IContent content, StreamWriter writer)
         {
             if (content is ArrayContent arrayContent)

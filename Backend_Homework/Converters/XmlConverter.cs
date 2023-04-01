@@ -20,10 +20,19 @@ namespace Backend_Homework.Converters
             public const string Text = "#text";
             public const string Whitespace = "#whitespace";
             public const string SignificantWhitespace = "#significant-whitespace";
+            /// <summary>
+            /// <?xml ?> heading
+            /// </summary>
             public const string XmlDeclaration = "xml";
+            /// <summary>
+            /// Tag attributes e.g. <div class="attribute" />
+            /// </summary>
             public const string Attributes = "#attributes";
         }
 
+        /// <summary>
+        /// Set of attributes to not serialize
+        /// </summary>
         private static readonly HashSet<string> skippableNames = new HashSet<string>
         {
             ReservedNames.CDATA,
@@ -33,6 +42,11 @@ namespace Backend_Homework.Converters
             ReservedNames.Attributes,
         };
 
+        /// <summary>
+        /// Converts stream containing XML string representation into IContent
+        /// </summary>
+        /// <param name="file">Stream containing string xml representation</param>
+        /// <returns>IContent xml representation</returns>
         public Task<IContent> FromStream(Stream file)
         {
             return Task.Run<IContent>(() =>
@@ -43,6 +57,11 @@ namespace Backend_Homework.Converters
             });
         }
 
+        /// <summary>
+        /// Generates Stream XML string representation from compatible content
+        /// </summary>
+        /// <param name="content">Content to serialize, must contain ObjectContent, with #document as a single parent property</param>
+        /// <returns>Stream containing string XML representation</returns>
         public Task<Stream> FromContent(IContent content)
         {
             var task = Task.Run<Stream>(() =>
@@ -57,6 +76,12 @@ namespace Backend_Homework.Converters
             return task;
         }
 
+        /// <summary>
+        /// Internal method for IContent to XML string serialization
+        /// </summary>
+        /// <param name="content">Content to be serialized, must be compatible</param>
+        /// <param name="streamWriter">Streamwriter containing serialized string</param>
+        /// <param name="isRoot">Is root of the XML document?</param>
         private void SerializeIntoStream(IContent content, StreamWriter streamWriter, bool isRoot = false)
         {
             if (isRoot)
@@ -122,6 +147,11 @@ namespace Backend_Homework.Converters
                 throw new InvalidOperationException("Invalid content structure, this should not happen with valid xml");
         }
 
+        /// <summary>
+        /// Returns a list of contents, sans those who can be skipped during serialization
+        /// </summary>
+        /// <param name="content">Object content representation from which children are returned</param>
+        /// <returns>Children of Content that are compatible with serialization</returns>
         private IList<KeyValuePair<string, IContent>> GetNonReservedChildren(ObjectContent content)
         {
             var accumulator = new List<KeyValuePair<string, IContent>>();
@@ -131,6 +161,11 @@ namespace Backend_Homework.Converters
             return accumulator;
         }
 
+        /// <summary>
+        /// Serializes XML attributes from content
+        /// </summary>
+        /// <param name="content">Content to gather XML attributes from</param>
+        /// <param name="streamWriter">Stream to write the string representation to</param>
         private void SerializeAttributeIntoStream(ObjectContent content, StreamWriter streamWriter)
         {
             if (content.Children.ContainsKey(ReservedNames.Attributes))
@@ -149,6 +184,12 @@ namespace Backend_Homework.Converters
             }
         }
 
+        /// <summary>
+        /// Converts XML nodes into IContent format
+        /// </summary>
+        /// <param name="xml">XML to be converted</param>
+        /// <param name="rootElement">Is xml to parent node?</param>
+        /// <returns>IContent xml representation</returns>
         private IContent SerializeIntoContent(XmlNode xml, bool rootElement = false)
         {
             if (xml.NodeType == XmlNodeType.Text || xml.NodeType == XmlNodeType.Whitespace || xml.NodeType == XmlNodeType.SignificantWhitespace)
@@ -195,6 +236,10 @@ namespace Backend_Homework.Converters
             return trueParent;
         }
 
+        /// <summary>
+        /// Find attributes of all xml attributes, including <?xml ?> declaration
+        /// </summary>
+        /// <returns>List of attributes</returns>
         private IList<(string Name, string Value)> GetAttributes(XmlNode xml)
         {
             var accumulator = new List<(string Name, string Value)>();
@@ -220,6 +265,10 @@ namespace Backend_Homework.Converters
             return accumulator;
         }
 
+        /// <summary>
+        /// Creates object content from a specific node to write into
+        /// </summary>
+        /// <returns>Tuple of objects, one to write in, one to return (done to correctly represent parent XML node relatioship)</returns>
         private (ObjectContent toReturn, ObjectContent toWriteIn) BuildObjectContent(XmlNode xml, bool rootElement)
         {
             if (rootElement)

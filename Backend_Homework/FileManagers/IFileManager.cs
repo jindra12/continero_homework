@@ -6,7 +6,7 @@ namespace Backend_Homework.FileManagers
     public interface IFileManager
     {
         /// <summary>
-        /// Loads a file from T config
+        /// Loads a file from config
         /// </summary>
         public Task<Stream> Load(string config);
 

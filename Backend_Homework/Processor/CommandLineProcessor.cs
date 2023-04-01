@@ -136,7 +136,7 @@ namespace Backend_Homework.Processor
                     if (classAttributes.Count() != 1)
                         throw new TypeLoadException($"Cannot load {type.Name} implementation of {baseType.Name} that does not have precisely one CommandLineAttribute");
                     var commandLineAttribute = classAttributes.Cast<CommandLineAttribute>().Single();
-                    return commandLineAttribute.Command;
+                    return commandLineAttribute.Argument;
                 });
         }
     }
