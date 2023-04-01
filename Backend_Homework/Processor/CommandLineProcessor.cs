@@ -1,5 +1,4 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
 using Backend_Homework.Attributes;
 using Backend_Homework.Converters;
 using Backend_Homework.FileManagers;
@@ -8,15 +7,15 @@ namespace Backend_Homework.Processor
 {
     public class CommandLineProcessor
     {
-        private readonly Lazy<IDictionary<string, Type>> converters = new Lazy<IDictionary<string, Type>>(LoadTypesFromAssembly<IConverter>);
-        private readonly Lazy<IDictionary<string, Type>> fileManagers = new Lazy<IDictionary<string, Type>>(LoadTypesFromAssembly<IFileManager<object>>);
+        private readonly Lazy<IDictionary<string, Type>> converters = new Lazy<IDictionary<string, Type>>(() => LoadTypesFromAssembly(typeof(IConverter)));
+        private readonly Lazy<IDictionary<string, Type>> fileManagers = new Lazy<IDictionary<string, Type>>(() => LoadTypesFromAssembly(typeof(IFileManager)));
 
         private IConverter? inConverter;
         private IConverter? outConverter;
-        private IFileManager<object>? inFileManager;
-        private IFileManager<object>? outFileManager;
-        private object? inFileManagerConfig;
-        private object? outFileManagerConfig;
+        private IFileManager? inFileManager;
+        private IFileManager? outFileManager;
+        private string? inFileManagerConfig;
+        private string? outFileManagerConfig;
 
         private struct ArgumentTypes
         {
@@ -54,11 +53,11 @@ namespace Backend_Homework.Processor
                     case ProcessorState.ExpectingConfiguration:
                         throw new ArgumentException($"Missing argument, try setting file format or type");
                     case ProcessorState.ExpectingInFileManager:
-                        inFileManager = GetInstanceFromCommandLine<IFileManager<object>>(fileManagers.Value, argument);
+                        inFileManager = GetInstanceFromCommandLine<IFileManager>(fileManagers.Value, argument);
                         state = ProcessorState.ExpectingInFileManagerConfig;
                         break;
                     case ProcessorState.ExpectingInFileManagerConfig:
-                        inFileManagerConfig = inFileManager!.ParseConfigFromCommandLine(argument);
+                        inFileManagerConfig = argument;
                         state = ProcessorState.ExpectingConfiguration;
                         break;
                     case ProcessorState.ExpectingInFormat:
@@ -66,11 +65,11 @@ namespace Backend_Homework.Processor
                         state = ProcessorState.ExpectingConfiguration;
                         break;
                     case ProcessorState.ExpectingOutFileManager:
-                        outFileManager = GetInstanceFromCommandLine<IFileManager<object>>(fileManagers.Value, argument);
+                        outFileManager = GetInstanceFromCommandLine<IFileManager>(fileManagers.Value, argument);
                         state = ProcessorState.ExpectingOutFileManagerConfig;
                         break;
                     case ProcessorState.ExpectingOutFileManagerConfig:
-                        outFileManagerConfig = outFileManager!.ParseConfigFromCommandLine(argument);
+                        outFileManagerConfig = argument;
                         state = ProcessorState.ExpectingConfiguration;
                         break;
                     case ProcessorState.ExpectingOutFormat:
@@ -126,13 +125,16 @@ namespace Backend_Homework.Processor
             return Activator.CreateInstance(types[argument]) as T ?? throw new InvalidOperationException($"Cannot create class of type {nameof(T)}");
         }
 
-        private static IDictionary<string, Type> LoadTypesFromAssembly<T>()
+        private static IDictionary<string, Type> LoadTypesFromAssembly(Type baseType)
         {
-            return Assembly.GetExecutingAssembly().GetTypes()
-                .Where(type => typeof(T).IsAssignableFrom(type)).ToDictionary((type) => {
+            return AppDomain
+                .CurrentDomain
+                .GetAssemblies()
+                .SelectMany(assembly => assembly.GetTypes())
+                .Where(type => baseType.IsAssignableFrom(type) && type.IsClass).ToDictionary((type) => {
                     var classAttributes = type.GetCustomAttributes(typeof(CommandLineAttribute), true);
                     if (classAttributes.Count() != 1)
-                        throw new TypeLoadException($"Cannot load {nameof(T)} implementation that does not have precisely one CommandLineAttribute");
+                        throw new TypeLoadException($"Cannot load {type.Name} implementation of {baseType.Name} that does not have precisely one CommandLineAttribute");
                     var commandLineAttribute = classAttributes.Cast<CommandLineAttribute>().Single();
                     return commandLineAttribute.Command;
                 });

@@ -3,19 +3,14 @@ using Backend_Homework.Attributes;
 namespace Backend_Homework.FileManagers
 {
     [CommandLine("file")]
-    public class FileManager : IFileManager<string>
+    public class FileManager : IFileManager
     {
-        public string ParseConfigFromCommandLine(string input)
-        {
-            return input;
-        }
-
-        async Task<Stream> IFileManager<string>.Load(string path)
+        public async Task<Stream> Load(string path)
         {
             return new MemoryStream(await File.ReadAllBytesAsync(path));
         }
 
-        Task IFileManager<string>.Save(string path, Stream file)
+        public Task Save(string path, Stream file)
         {
             using (var fileStream = File.Create(path))
             {
